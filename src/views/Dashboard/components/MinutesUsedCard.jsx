@@ -1,10 +1,14 @@
 import { LuClock } from "react-icons/lu";
 import InformativeCard from "./InformativeCard";
+import { useMemo } from "react";
 
 export default function MinutesUsedCard({ accountUsage }) {
     const { usedMinutes = 0, planMinutes = 0 } = accountUsage || {};
 
-    const usedPercentage = ((usedMinutes / planMinutes) * 100).toFixed(2);
+    const usedPercentage = useMemo(() => {
+        const percentage = ((usedMinutes / planMinutes) * 100).toFixed(2);
+        return isNaN(percentage) ? 0 : percentage;
+    }, [usedMinutes, planMinutes]);
 
     return (
         <InformativeCard
