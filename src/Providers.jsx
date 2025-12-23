@@ -1,4 +1,5 @@
 //CONTEXT PROVIDERS
+import { AtlasClientProvider } from './atlas/client';
 import { AuthProvider } from './context/AuthContext';
 import { ProspectsProvider } from './context/ProspectsContext';
 import { SalesCoachProvider } from './context/SalesCoachContext';
@@ -9,16 +10,18 @@ const queryClient = new QueryClient();
 
 export default function Providers({ children }) {
     return (
-      <QueryClientProvider client={queryClient}>
-          <ToastProvider>
-              <AuthProvider>
-                  <ProspectsProvider>
-                      <SalesCoachProvider>
-                          {children}
-                      </SalesCoachProvider>
-                  </ProspectsProvider>
-              </AuthProvider>
-          </ToastProvider>
-      </QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+            <ToastProvider>
+                <AuthProvider>
+                    <AtlasClientProvider>
+                        <ProspectsProvider>
+                            <SalesCoachProvider>
+                                {children}
+                            </SalesCoachProvider>
+                        </ProspectsProvider>
+                    </AtlasClientProvider>
+                </AuthProvider>
+            </ToastProvider>
+        </QueryClientProvider>
     );
 }

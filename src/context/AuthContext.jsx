@@ -150,7 +150,6 @@ export const AuthProvider = ({ children }) => {
     },
     signIn: (data) => supabase.auth.signInWithPassword(data),
     handleSignOut,
-    user,
     globalUser,
     authToken,
     userLoading,
