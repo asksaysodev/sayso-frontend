@@ -15,6 +15,7 @@ export function AtlasClientProvider({children}: {children: React.ReactNode}) {
         <AtlasProvider
             getAuth={() => {return authToken ?? null}}
             loginCallback={loginCallback}
+            host={import.meta.env.VITE_BACKEND_BASE_URL}
             userEmail={globalUser?.email}
             userId={globalUser?.id}
             userName={globalUser?.name}

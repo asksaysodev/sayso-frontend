@@ -1,6 +1,14 @@
-import SubscriptionPanel from "./components/SubscriptionPanel";
+import ViewLayout from "@/components/layouts/ViewLayout";
 import "./styles.css";
 
+import { PricingComponent } from "@runonatlas/react";
+
 export default function Subscription() {
-  return <SubscriptionPanel />;
+  return (
+    <ViewLayout title="Subscription">
+      <PricingComponent
+        successUrl={"sayso://subscription-success"}
+      />
+    </ViewLayout>
+  )
 }
