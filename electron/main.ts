@@ -153,6 +153,7 @@ async function loadAuthUserProfile(accessToken: string, email: string | undefine
       timeout: 5000,
     });
     setAuthUser(res.data.data);
+    maybeReportAppVersion(baseUrl, accessToken, res.data.data);
   } catch (err) {
     console.warn('[MAIN] sign-in: profile fetch failed — tray will show logged-out state', (err as Error)?.message);
     Sentry.captureException(err);
@@ -216,6 +217,7 @@ authManager.on('token-refreshed', async (state: AuthState) => {
     ]);
     if (profileResult.status === 'fulfilled') {
       setAuthUser(profileResult.value.data.data);
+      maybeReportAppVersion(baseUrl, state.accessToken!, profileResult.value.data.data);
     } else {
       console.warn('[MAIN] Startup-offline recovery: profile fetch failed', profileResult.reason);
       Sentry.captureException(profileResult.reason);
@@ -555,7 +557,7 @@ async function fetchAndCacheFontSize(baseUrl: string, accessToken: string): Prom
 async function reportAppVersionIfChanged(baseUrl: string, accessToken: string, storedVersion: string | null | undefined): Promise<void> {
   const runningVersion = app.getVersion();
   if (runningVersion === storedVersion) return;
-  const osLabel = process.platform === 'win32' ? 'Windows' : 'macOS';
+  const osLabel = process.platform === 'darwin' ? 'macOS' : process.platform === 'win32' ? 'Windows' : process.platform;
   const osVersion = process.getSystemVersion();
   await axios.put(
     `${baseUrl}/accounts/update-account`,
@@ -568,6 +570,14 @@ async function reportAppVersionIfChanged(baseUrl: string, accessToken: string, s
     },
     { headers: { Authorization: `Bearer ${accessToken}` }, timeout: 5000 }
   );
+}
+
+function maybeReportAppVersion(baseUrl: string, accessToken: string, user: AuthUser | false | null): void {
+  if (!app.isPackaged || IS_STAGING || !user) return;
+  reportAppVersionIfChanged(baseUrl, accessToken, user.desktop_app_latest_version as string | null | undefined).catch((err) => {
+    console.warn('[MAIN] Failed to report app version:', err?.message);
+    Sentry.captureException(err);
+  });
 }
 
 // ===== HELPER FUNCTIONS =====
@@ -1820,12 +1830,7 @@ app.whenReady().then(async () => {
         Sentry.captureException(featuresResult.reason);
       }
 
-      if (app.isPackaged && !IS_STAGING && global.authUser) {
-        reportAppVersionIfChanged(baseUrl, authState.accessToken!, global.authUser.desktop_app_latest_version as string | null | undefined).catch((err) => {
-          console.warn('[MAIN] Failed to report app version:', err?.message);
-          Sentry.captureException(err);
-        });
-      }
+      maybeReportAppVersion(baseUrl, authState.accessToken!, global.authUser);
 
       // Open onboarding directly if not yet complete — no splash shown.
       const onboardingStatus = (global.authUser || undefined)?.onboarding_status;
