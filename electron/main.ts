@@ -552,6 +552,24 @@ async function fetchAndCacheFontSize(baseUrl: string, accessToken: string): Prom
   }
 }
 
+async function reportAppVersionIfChanged(baseUrl: string, accessToken: string, storedVersion: string | null | undefined): Promise<void> {
+  const runningVersion = app.getVersion();
+  if (runningVersion === storedVersion) return;
+  const osLabel = process.platform === 'win32' ? 'Windows' : 'macOS';
+  const osVersion = process.getSystemVersion();
+  await axios.put(
+    `${baseUrl}/accounts/update-account`,
+    {
+      updateData: {
+        desktop_app_latest_version: runningVersion,
+        desktop_app_os: `${osLabel} ${osVersion}`,
+        desktop_app_updated_at: new Date().toISOString(),
+      },
+    },
+    { headers: { Authorization: `Bearer ${accessToken}` }, timeout: 5000 }
+  );
+}
+
 // ===== HELPER FUNCTIONS =====
 function isCoachWindowOpen() {
   return global.coachWindow && !global.coachWindow.isDestroyed();
@@ -1800,6 +1818,13 @@ app.whenReady().then(async () => {
       if (featuresResult.status === 'rejected') {
         console.warn('[MAIN] Silent auth: features fetch failed — no features enabled by default', featuresResult.reason);
         Sentry.captureException(featuresResult.reason);
+      }
+
+      if (app.isPackaged && !IS_STAGING && global.authUser) {
+        reportAppVersionIfChanged(baseUrl, authState.accessToken!, global.authUser.desktop_app_latest_version as string | null | undefined).catch((err) => {
+          console.warn('[MAIN] Failed to report app version:', err?.message);
+          Sentry.captureException(err);
+        });
       }
 
       // Open onboarding directly if not yet complete — no splash shown.

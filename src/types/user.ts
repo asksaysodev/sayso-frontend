@@ -50,6 +50,9 @@ export interface Account {
   account_type: AccountType;
   status: AccountStatus;
   onboarding_status?: 'complete' | 'dismissed' | null;
+  desktop_app_latest_version?: string | null;
+  desktop_app_os?: string | null;
+  desktop_app_updated_at?: string | null;
 }
 export interface OrgMemberInvite {
     email: string;
